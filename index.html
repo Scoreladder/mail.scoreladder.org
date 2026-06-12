@@ -194,7 +194,7 @@ function closeCompose() {
 async function sendEmail() {
   const from = document.getElementById("from").value;
 
-  await fetch(`${API}/api/send`, {
+  const res = await fetch(`${API}/api/send`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
@@ -207,6 +207,7 @@ async function sendEmail() {
 
   closeCompose();
   loadInbox();
+  console.log(res)
   alert("Sent!");
 }
 
