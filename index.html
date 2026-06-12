@@ -194,6 +194,11 @@ function closeCompose() {
 async function sendEmail() {
   const from = document.getElementById("from").value;
 
+  console.log("Sending email from", from);
+  console.log("To:", document.getElementById("to").value);
+  console.log("Subject:", document.getElementById("subject").value);
+  console.log("Body:", document.getElementById("body").value);
+
   const res = await fetch(`${API}/api/send`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
