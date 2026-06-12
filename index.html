@@ -116,7 +116,11 @@ async function sendEmail() {
     })
   });
 
-  alert("Sent!");
+    const res = await fetch(`${API}/api/send`);
+    const text = await res.text();
+    console.log(text);
+
+    alert("Sent!");
 }
 
 loadInbox();
