@@ -3,32 +3,56 @@
 <head>
   <title>Scoreladder Mail</title>
   <style>
-    body { margin: 0; font-family: Arial; display: flex; height: 100vh; }
+    body {
+      margin: 0;
+      font-family: Arial;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
+    /* SIDEBAR */
     #sidebar {
       width: 220px;
       border-right: 1px solid #ddd;
       padding: 10px;
+      background: #f8f8f8;
     }
 
-    #main {
-      flex: 1;
-      padding: 10px;
-      position: relative;
+    #sidebar button {
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    #from {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    /* EMAIL LIST */
+    #listPane {
+      width: 35%;
+      border-right: 1px solid #ddd;
+      overflow-y: auto;
     }
 
     .email {
-      padding: 10px;
+      padding: 12px;
       border-bottom: 1px solid #eee;
       cursor: pointer;
     }
 
-    .email:hover { background: #f5f5f5; }
+    .email:hover {
+      background: #f1f1f1;
+    }
 
-    input, textarea {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 8px;
+    /* VIEWER */
+    #viewPane {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
     }
 
     /* COMPOSE POPUP */
@@ -37,40 +61,52 @@
       position: fixed;
       right: 20px;
       bottom: 20px;
-      width: 400px;
-      height: 420px;
+      width: 420px;
+      height: 450px;
       background: white;
       border: 1px solid #ccc;
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      padding: 10px;
       z-index: 999;
+      display: flex;
+      flex-direction: column;
     }
 
     #composeHeader {
+      background: #222;
+      color: white;
+      padding: 8px;
       display: flex;
       justify-content: space-between;
-      font-weight: bold;
-      margin-bottom: 10px;
     }
 
-    #emailView {
-      margin-top: 10px;
+    #composeBody {
       padding: 10px;
-      border: 1px solid #ddd;
-      background: #fff;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    #composeBody input,
+    #composeBody textarea {
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+
+    #composeBody textarea {
+      flex: 1;
+      resize: none;
     }
   </style>
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
 <div id="sidebar">
-  <h3>Scoreladder Mail</h3>
+  <h3>Mail</h3>
 
   <button onclick="loadInbox()">Inbox</button>
   <button onclick="openCompose()">Compose</button>
-
-  <br/><br/>
 
   <select id="from">
     <option value="input@mail.scoreladder.org">input@mail.scoreladder.org</option>
@@ -79,26 +115,31 @@
   </select>
 </div>
 
-<div id="main">
-  <h3>Inbox</h3>
+<!-- EMAIL LIST -->
+<div id="listPane">
   <div id="emails"></div>
-
-  <!-- EMAIL VIEW PANEL (DO NOT DELETE THIS) -->
-  <div id="emailView"></div>
 </div>
 
-<!-- COMPOSE POPUP -->
+<!-- VIEWER -->
+<div id="viewPane">
+  <h3>Welcome</h3>
+  <p>Select an email to view it.</p>
+</div>
+
+<!-- COMPOSE -->
 <div id="compose">
   <div id="composeHeader">
     <span>New Message</span>
     <button onclick="closeCompose()">X</button>
   </div>
 
-  <input id="to" placeholder="To" />
-  <input id="subject" placeholder="Subject" />
-  <textarea id="body" rows="10" placeholder="Message"></textarea>
+  <div id="composeBody">
+    <input id="to" placeholder="To" />
+    <input id="subject" placeholder="Subject" />
+    <textarea id="body" placeholder="Message"></textarea>
 
-  <button onclick="sendEmail()">Send</button>
+    <button onclick="sendEmail()">Send</button>
+  </div>
 </div>
 
 <script>
@@ -110,8 +151,6 @@ async function loadInbox() {
   const data = await res.json();
 
   const box = document.getElementById("emails");
-  if (!box) return;
-
   box.innerHTML = "";
 
   data.forEach(e => {
@@ -123,18 +162,16 @@ async function loadInbox() {
   });
 }
 
-/* ================= OPEN EMAIL ================= */
+/* ================= VIEW EMAIL ================= */
 async function openEmail(id) {
   const res = await fetch(`${API}/api/email?id=${id}`);
   const e = await res.json();
 
-  const view = document.getElementById("emailView");
-  if (!view) return;
-
-  view.innerHTML = `
-    <h3>${e.subject}</h3>
+  document.getElementById("viewPane").innerHTML = `
+    <h2>${e.subject}</h2>
     <p><b>From:</b> ${e.from_addr}</p>
-    <pre>${e.body_text}</pre>
+    <hr>
+    <pre style="white-space: pre-wrap">${e.body_text}</pre>
   `;
 
   await fetch(`${API}/api/read`, {
@@ -144,34 +181,32 @@ async function openEmail(id) {
   });
 }
 
-/* ================= COMPOSE (POPUP) ================= */
+/* ================= COMPOSE ================= */
 function openCompose() {
-  document.getElementById("compose").style.display = "block";
+  document.getElementById("compose").style.display = "flex";
 }
 
 function closeCompose() {
   document.getElementById("compose").style.display = "none";
 }
 
-/* ================= SEND EMAIL ================= */
+/* ================= SEND ================= */
 async function sendEmail() {
   const from = document.getElementById("from").value;
-  const to = document.getElementById("to").value;
-  const subject = document.getElementById("subject").value;
-  const body = document.getElementById("body").value;
 
-  const res = await fetch(`${API}/api/send`, {
+  await fetch(`${API}/api/send`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ from, to, subject, body })
+    body: JSON.stringify({
+      from,
+      to: document.getElementById("to").value,
+      subject: document.getElementById("subject").value,
+      body: document.getElementById("body").value
+    })
   });
-
-  const text = await res.text();
-  console.log(text);
 
   closeCompose();
   loadInbox();
-
   alert("Sent!");
 }
 
